@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IBONARIUM · PLANETARY VITALITY ENGINE · БІОСФЕРНИЙ ТЕЗОР</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #010805;
+            --accent-pri: #00ffaa;
+            --accent-sec: #00f2ff;
+            --accent-tri: #ff00ff;
+            --accent-luna: #e1e1e1;
+            /* Місячний приплив */
+            --font-mono: 'Space Mono', monospace;
+            --font-ui: 'Inter', sans-serif;
+            --pad-outer: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: #d1d1d1;
+            font-family: var(--font-ui);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            grid-template-rows: 80px 1fr;
+            height: 100vh;
+            padding: var(--pad-outer);
+            gap: 20px;
+            z-index: 10;
+        }
+
+        /* ШАПКА */
+        .header {
+            grid-column: 1 / 4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 255, 170, 0.15);
+            padding-bottom: 10px;
+        }
+
+        .brand-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand {
+            font-family: var(--font-mono);
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            color: var(--accent-pri);
+            text-shadow: 0 0 15px rgba(0, 255, 170, 0.4);
+        }
+
+        .sub-brand {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: #6a7c74;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        /* БОКОВІ ПАНЕЛІ */
+        .col {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .col::-webkit-scrollbar {
+            display: none;
+        }
+
+        .card {
+            background: rgba(4, 12, 8, 0.6);
+            border: 1px solid rgba(0, 255, 170, 0.08);
+            backdrop-filter: blur(15px);
+            padding: 15px;
+            position: relative;
+        }
+
+        .card-h {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--accent-pri);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--accent-pri);
+            padding-left: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 11px;
+        }
+
+        .m-lbl {
+            color: #88948e;
+        }
+
+        .m-val {
+            color: #f0f0f0;
+            font-weight: bold;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+
+        .m-unit {
+            color: #5a6660;
+            font-size: 8px;
+            margin-left: 4px;
+        }
+
+        .layer-box {
+            padding: 10px;
+            background: rgba(0, 255, 170, 0.04);
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .layer-score-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 8px;
+        }
+
+        .layer-score {
+            font-size: 26px;
+            font-weight: 300;
+            font-family: var(--font-mono);
+        }
+
+        .layer-desc {
+            font-size: 9px;
+            line-height: 1.4;
+            color: #9db2a9;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        /* ЦЕНТР */
+        .col-center {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #viz-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .center-hud {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-left: 2px solid var(--accent-pri);
+        }
+
+        .big-idx {
+            font-size: 72px;
+            font-weight: 200;
+            color: #fff;
+            font-family: var(--font-mono);
+            line-height: 0.9;
+        }
+
+        .idx-label {
+            font-size: 10px;
+            letter-spacing: 5px;
+            color: var(--accent-pri);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .idx-status {
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+
+        /* ЛОГ ТА АНАЛІТИКА */
+        .log-box {
+            font-family: var(--font-mono);
+            font-size: 8px;
+            color: #7a8c84;
+            height: 120px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            margin-bottom: 3px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            padding-bottom: 2px;
+        }
+
+        .log-t {
+            color: #4a5c54;
+            margin-right: 6px;
+        }
+
+        #history-graph {
+            height: 60px;
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        /* ПОВІДОМЛЕННЯ */
+        #alert-stack {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 300px;
+        }
+
+        .alert-item {
+            background: rgba(2, 10, 6, 0.95);
+            border-left: 4px solid var(--accent-pri);
+            padding: 10px 15px;
+            font-size: 9px;
+            color: var(--accent-pri);
+            animation: slideIn 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .alert-warn {
+            border-color: #ffaa00;
+            color: #ffaa00;
+        }
+
+        .alert-crit {
+            border-color: #ff1144;
+            color: #ff1144;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(110%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div id="alert-stack"></div>
+
+    <div class="app-container">
+        <!-- ШАПКА -->
+        <div class="header">
+            <div class="brand-box">
+                <div class="brand">IBONARIUM // PLANETARY VITALITY</div>
+                <div class="sub-brand">Математична модель планетарного гомеостазу та біосферних циклів</div>
+            </div>
+            <div style="text-align:right">
+                <div id="clock"
+                    style="font-family: var(--font-mono); font-size: 20px; color:#fff; letter-spacing: 2px;">00:00:00
+                </div>
+                <div style="font-size:8px; color:#6a7c74; margin-top:4px;">ECO-ENGINE V2.5 ONLINE</div>
+            </div>
+        </div>
+
+        <!-- ЛІВА ПАНЕЛЬ: МІКРОСВІТ ТА ФЛОРА -->
+        <div class="col">
+            <div class="card">
+                <div class="card-h">
+                    <span>🧬 МІКРОБНО-КЛІТИННИЙ ШАР</span>
+                    <span id="micro-status" style="color:#5a6660">ЗАПУСК</span>
+                </div>
+                <div class="layer-box">
+                    <div class="layer-score-box">
+                        <span class="layer-score" id="score-micro">--</span>
+                        <span style="font-size:8px; color:var(--accent-pri)">METABOLIC VITALITY</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">Температура ґрунту (Z0)</span>
+                        <span class="m-val" id="val-soil-t">--</span><span class="m-unit">°C</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">Вологість ґрунту</span>
+                        <span class="m-val" id="val-soil-m">--</span><span class="m-unit">m³/m³</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">AQI (Атмосферний тиск)</span>
+                        <span class="m-val" id="val-aqi">--</span><span class="m-unit">idx</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">Ензимна Активність (Sim)</span>
+                        <span class="m-val" id="val-enzym">--</span><span class="m-unit">%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">Міцеліальна стабільність</span>
+                        <span class="m-val" id="val-mycel">--</span><span class="m-unit">δ/N</span>
+                    </div>
+                    <div class="layer-desc">
+                        <strong>PEDO-METABOLIC ANALYSIS:</strong> Оцінка ферментативної активності педосфери. Аналіз
+                        градієнтів розкладу органіки через температурні (Z0) та гідрологічні константи. Визначає
+                        потенціал постачання азоту та фосфору до кореневих систем.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-h">
+                    <span>🌿 ВЕГЕТАТИВНА ФАЗА</span>
+                    <span id="flora-status" style="color:#5a6660">ЗАПУСК</span>
+                </div>
+                <div class="layer-box" style="background: rgba(0, 204, 255, 0.05);">
+                    <div class="layer-score-box">
+                        <span class="layer-score" id="score-flora" style="color:var(--accent-sec)">--</span>
+                        <span style="font-size:8px; color:var(--accent-sec)">PHOTO-SYNTH CAPACITY</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">UV Інтенсивність</span>
+                        <span class="m-val" id="val-uv">--</span><span class="m-unit">idx</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">Евапотранспірація (ET)</span>
+                        <span class="m-val" id="val-et">--</span><span class="m-unit">mm/h</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">Дефіцит тиску пари (VPD)</span>
+                        <span class="m-val" id="val-vpd">--</span><span class="m-unit">kPa</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">Вуглецевий баланс (NPP)</span>
+                        <span class="m-val" id="val-npp">--</span><span class="m-unit">mol/m²</span>
+                    </div>
+                    <div class="layer-desc">
+                        <strong>VEGETATIVE FLUX MODEL:</strong> Моделювання продихової провідності та ксилемного току.
+                        VPD визначає гідравлічний стрес рослин, а ET — інтенсивність газообміну та охолодження листової
+                        маси.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="flex:1">
+                <div class="card-h"><span>🔄 БІО-ЦИКЛИ ТА ХРОНОБІОЛОГІЯ</span></div>
+                <div class="metric-row">
+                    <span class="m-lbl">Циркадний Дрифт</span>
+                    <span class="m-val" id="val-circadian">--</span><span class="m-unit">deg/Z</span>
+                </div>
+                <div class="metric-row">
+                    <span class="m-lbl">Світловий День</span>
+                    <span class="m-val" id="val-daylen">--</span><span class="m-unit">h:m</span>
+                </div>
+                <div class="layer-desc">
+                    Аналіз синхронізації внутрішнього годинника з планетарним обертанням.
+                </div>
+                <canvas id="history-graph"></canvas>
+            </div>
+        </div>
+
+        <!-- ЦЕНТР: ТОПОГРАФІЧНА КАРТА ЖИТТЯ -->
+        <div class="col-center">
+            <canvas id="viz-canvas"></canvas>
+
+            <div class="center-hud">
+                <div class="idx-label">PLANETARY VITALITY INDEX</div>
+                <div class="big-idx" id="main-idx">--</div>
+                <div class="idx-status" id="main-status">ОБЧИСЛЕННЯ СИСТЕМИ...</div>
+            </div>
+        </div>
+
+        <!-- ПРАВА ПАНЕЛЬ: ПРИПЛИВИ ТА ПОДІЇ -->
+        <div class="col">
+            <div class="card" id="luna-card">
+                <div class="card-h">
+                    <span>🌕 ГРАВІТАЦІЙНО-ПРИПЛИВНИЙ ШАР</span>
+                </div>
+                <div class="layer-box" style="background: rgba(225, 225, 225, 0.03);">
+                    <div class="layer-score-box">
+                        <span class="layer-score" id="score-luna" style="color:var(--accent-luna)">--</span>
+                        <span style="font-size:8px; color:var(--accent-luna)">TIDAL FORCE IDX</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">Фаза Місяця</span>
+                        <span class="m-val" id="val-luna-phase">--</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">Сила Припливу</span>
+                        <span class="m-val" id="val-tide">--</span>
+                    </div>
+                    <div class="layer-desc">
+                        Вплив місячної гравітації на гідродинаміку клітин та рідинні системи.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-h">
+                    <span>🐾 ГАРМОНІЯ БІОСФЕРИ</span>
+                    <span id="eco-status" style="color:#5a6660">ЗАПУСК</span>
+                </div>
+                <div class="layer-box" style="background: rgba(255, 0, 255, 0.05);">
+                    <div class="layer-score-box">
+                        <span class="layer-score" id="score-eco" style="color:var(--accent-tri)">--</span>
+                        <span style="font-size:8px; color:var(--accent-tri)">ECO-INTREGRITY</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">Біо-Події (Активність)</span>
+                        <span class="m-val" id="val-bio">--</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="m-lbl">Шумове Забруднення</span>
+                        <span class="m-val" id="val-noise">--</span><span class="m-unit">дБ</span>
+                    </div>
+                    <div class="layer-desc">
+                        Моніторинг міграцій, нересту та антропогенного тиску на екосистеми.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="flex:1; display:flex; flex-direction:column;">
+                <div class="card-h"><span>📡 ECO-LOG TRANSMISSION</span></div>
+                <div class="log-box" id="log-box"></div>
+                <div
+                    style="margin-top:auto; font-size:8px; color:#3a4c44; border-top:1px solid rgba(0,255,170,0.1); padding-top:10px;">
+                    ДЖЕРЕЛА: OPEN-METEO / GBIF / SUNRISE-API / IBONARIUM-PLANETARY-AI
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STATE = {
+            micro: { soilT: 0, soilM: 0, aqi: 50, enzym: 0, mycel: 0, score: 0 },
+            flora: { uv: 0, hum: 0, et: 0, vpd: 0, npp: 0, score: 0 },
+            luna: { phase: "", illumination: 0, tide: 0, score: 0 },
+            chrono: { circadian: 0, dayLength: 0 },
+            eco: { biodiversity: 0, noise: 40, habitat: 0, score: 0 },
+            globalIdx: 0,
+            history: []
+        };
+
+        const canvas = document.getElementById('viz-canvas');
+        const ctx = canvas.getContext('2d');
+        const logBox = document.getElementById('log-box');
+        const alertStack = document.getElementById('alert-stack');
+
+        let mouseX = 0, mouseY = 0, mouseActive = false, clickPulse = 0, animTime = 0;
+        const gridW = 40, gridH = 30;
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+            mouseActive = true;
+        });
+        canvas.addEventListener('mouseleave', () => mouseActive = false);
+        canvas.addEventListener('mousedown', () => clickPulse = 1.0);
+
+        async function init() {
+            window.addEventListener('resize', resize);
+            resize();
+            setInterval(updateClock, 1000);
+            setInterval(fetchMetabolicData, 60000);
+            setInterval(fetchFloraData, 300000);
+            setInterval(fetchEcoData, 600000);
+            for (let i = 0; i < 100; i++) STATE.history.push(40 + Math.random() * 20);
+            requestAnimationFrame(animLoop);
+            await Promise.all([fetchMetabolicData(), fetchFloraData(), fetchEcoData()]);
+            log("IBONARIUM PLANETARY ENGINE: ОНЛАЙН");
+        }
+
+        function resize() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
+
+        function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('uk-UA'); }
+
+        function log(msg) {
+            const time = new Date().toLocaleTimeString('uk-UA', { hour12: false });
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-t">[${time}]</span> ${msg}`;
+            logBox.prepend(entry);
+            if (logBox.children.length > 50) logBox.lastChild.remove();
+        }
+
+        function showAlert(msg, type = 'info') {
+            const item = document.createElement('div');
+            item.className = `alert-item alert-${type}`;
+            item.innerText = `[ПОДІЯ] ${msg}`;
+            alertStack.appendChild(item);
+            setTimeout(() => { item.style.opacity = '0'; setTimeout(() => item.remove(), 500); }, 6000);
+        }
+
+        async function fetchMetabolicData() {
+            document.getElementById('micro-status').innerText = 'SYNK';
+            try {
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.45&longitude=30.52&current=soil_temperature_0cm,soil_moisture_0_to_1cm&timezone=auto');
+                const data = await res.json();
+                STATE.micro.soilT = data.current.soil_temperature_0cm;
+                STATE.micro.soilM = data.current.soil_moisture_0_to_1cm;
+                STATE.micro.aqi = 35 + Math.random() * 25;
+
+                // Математика мікробіому
+                // Оптимум: T=22C, Moisture=0.3 m³/m³
+                const tEff = Math.max(0, 100 - (Math.abs(STATE.micro.soilT - 22) * 4));
+                const mEff = Math.max(0, 100 - (Math.abs(STATE.micro.soilM - 0.3) * 200));
+                STATE.micro.enzym = (tEff * 0.6 + mEff * 0.4);
+                STATE.micro.mycel = 70 + Math.sin(Date.now() / 1000000) * 20;
+
+                STATE.micro.score = (STATE.micro.enzym * 0.8 + (100 - STATE.micro.aqi / 2) * 0.2);
+                updateUI();
+                document.getElementById('micro-status').innerText = 'LIVE';
+            } catch (e) { document.getElementById('micro-status').innerText = 'ERR'; }
+        }
+
+        async function fetchFloraData() {
+            document.getElementById('flora-status').innerText = 'SYNK';
+            try {
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=50.45&longitude=30.52&current=temperature_2m,relative_humidity_2m,uv_index,evapotranspiration&timezone=auto');
+                const data = await res.json();
+                STATE.flora.uv = data.current.uv_index;
+                STATE.flora.hum = data.current.relative_humidity_2m;
+                STATE.flora.et = data.current.evapotranspiration || 0;
+
+                // Розрахунок VPD (Vapor Pressure Deficit)
+                const T = data.current.temperature_2m;
+                const es = 0.61078 * Math.exp((17.27 * T) / (T + 237.3));
+                const ea = es * (STATE.flora.hum / 100);
+                STATE.flora.vpd = Math.max(0, es - ea);
+
+                // NPP (Net Primary Production)
+                const uvFactor = STATE.flora.uv / 12;
+                const vpdFactor = Math.max(0, 1 - STATE.flora.vpd / 2.5);
+                STATE.flora.npp = (uvFactor * vpdFactor * 2.5);
+
+                const photoScore = (STATE.flora.uv > 0 ? (STATE.flora.uv / 10) * 100 : 10);
+                const waterScore = (1 - Math.abs(STATE.flora.hum - 60) / 100) * 100;
+                STATE.flora.score = (photoScore * 0.5 + waterScore * 0.3 + vpdFactor * 20);
+
+                updateUI();
+                document.getElementById('flora-status').innerText = 'LIVE';
+            } catch (e) { document.getElementById('flora-status').innerText = 'ERR'; }
+        }
+
+        async function fetchEcoData() {
+            document.getElementById('eco-status').innerText = 'SYNK';
+            try {
+                // Математика Місячних Циклів (Припливи)
+                const now = new Date();
+                const lp = calculateLunarPhase(now);
+                STATE.luna.illumination = lp.illum;
+                STATE.luna.phase = lp.name;
+
+                // M2 Припливний цикл (~12.42 години)
+                const tidePhase = (now.getTime() / (1000 * 60 * 60 * 12.42)) * Math.PI * 2;
+                STATE.luna.tide = Math.abs(Math.sin(tidePhase));
+                STATE.luna.score = 40 + (STATE.luna.tide * 40) + (lp.illum * 20);
+
+                // Хронобіологія (Сонце)
+                const sunRes = await fetch('https://api.sunrise-sunset.org/json?lat=50.45&lng=30.52&formatted=0');
+                const sunData = await sunRes.json();
+                const dayLenSec = sunData.results.day_length;
+                STATE.chrono.dayLength = (dayLenSec / 3600).toFixed(2);
+
+                // Еко-події через RSS
+                const newsRes = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss/search?q=wildlife+migration+ecology+nature');
+                const newsData = await newsRes.json();
+                STATE.eco.biodiversity = newsData.items ? newsData.items.length : 0;
+
+                STATE.eco.noise = 30 + Math.random() * 20;
+                STATE.eco.habitat = 85 - (Math.random() * 8);
+                STATE.eco.score = (STATE.eco.habitat * 0.7 + (100 - STATE.eco.noise) * 0.3);
+
+                updateUI();
+                log(`PLANETARY: Місяць ${STATE.luna.phase} | Приплив ${(STATE.luna.tide * 100).toFixed(0)}%`);
+                document.getElementById('eco-status').innerText = 'LIVE';
+            } catch (e) {
+                console.error(e);
+                document.getElementById('eco-status').innerText = 'ERR';
+            }
+        }
+
+        function calculateLunarPhase(date) {
+            const LUNAR = 29.530588853;
+            const diff = date.getTime() - new Date('2000-01-06T18:14:00Z').getTime();
+            const phase = (diff / (1000 * 60 * 60 * 24)) % LUNAR;
+            const illum = Math.abs(Math.sin((phase / LUNAR) * Math.PI));
+            let name = "Ростучий";
+            if (phase < 1.84) name = "Молодик";
+            else if (phase < 14.7) name = "Перша чверть";
+            else if (phase < 16.6) name = "Повня";
+            else name = "Спадний";
+            return { illum, name };
+        }
+
+        function updateUI() {
+            document.getElementById('val-soil-t').innerText = STATE.micro.soilT.toFixed(1);
+            document.getElementById('val-soil-m').innerText = STATE.micro.soilM.toFixed(3);
+            document.getElementById('val-aqi').innerText = STATE.micro.aqi.toFixed(0);
+            document.getElementById('val-enzym').innerText = STATE.micro.enzym.toFixed(1);
+            document.getElementById('val-mycel').innerText = STATE.micro.mycel.toFixed(2);
+            document.getElementById('score-micro').innerText = STATE.micro.score.toFixed(0);
+
+            document.getElementById('val-uv').innerText = STATE.flora.uv.toFixed(1);
+            document.getElementById('val-et').innerText = STATE.flora.et.toFixed(3);
+            document.getElementById('val-vpd').innerText = STATE.flora.vpd.toFixed(3);
+            document.getElementById('val-npp').innerText = STATE.flora.npp.toFixed(3);
+            document.getElementById('score-flora').innerText = STATE.flora.score.toFixed(0);
+
+            document.getElementById('val-luna-phase').innerText = STATE.luna.phase;
+            document.getElementById('val-tide').innerText = (STATE.luna.tide * 100).toFixed(0) + "%";
+            document.getElementById('score-luna').innerText = STATE.luna.score.toFixed(0);
+
+            document.getElementById('val-daylen').innerText = STATE.chrono.dayLength;
+            const hr = new Date().getHours() + new Date().getMinutes() / 60;
+            const circadian = Math.sin((hr / 24) * Math.PI * 2);
+            document.getElementById('val-circadian').innerText = circadian.toFixed(3);
+
+            document.getElementById('val-bio').innerText = STATE.eco.biodiversity;
+            document.getElementById('val-noise').innerText = STATE.eco.noise.toFixed(0);
+            document.getElementById('score-eco').innerText = STATE.eco.score.toFixed(0);
+
+            // МАТЕМАТИЧНА МОДЕЛЬ ПЛАНЕТАРНОГО ІНДЕКСУ
+            STATE.globalIdx = (
+                STATE.micro.score * 0.25 +
+                STATE.flora.score * 0.20 +
+                STATE.luna.score * 0.20 +
+                STATE.eco.score * 0.25 +
+                (50 + circadian * 50) * 0.10
+            );
+            document.getElementById('main-idx').innerText = STATE.globalIdx.toFixed(1);
+            STATE.history.push(STATE.globalIdx);
+            if (STATE.history.length > 200) STATE.history.shift();
+            updateStatus();
+            checkBioAlerts();
+        }
+
+        function checkBioAlerts() {
+            if (STATE.micro.soilT < 0 && !STATE.frozenAlert) { showAlert("КРИО-СТРЕС: Заморозки ґрунту.", "warn"); STATE.frozenAlert = true; }
+            if (STATE.luna.tide > 0.85) showAlert("ГВАРІТАЦІЙНИЙ ПІК: Максимальний припливний тиск.", "info");
+            if (STATE.globalIdx < 30) showAlert("ПЛАНЕТАРНА ДЕГРАДАЦІЯ: Біосфера під тиском.", "crit");
+        }
+
+        function updateStatus() {
+            const s = document.getElementById('main-status'), idx = STATE.globalIdx;
+            if (idx > 75) s.innerText = "ПЛАНЕТАРНИЙ РЕЗОНАНС";
+            else if (idx > 50) s.innerText = "СТАБІЛЬНИЙ ГОМЕОСТАЗ";
+            else s.innerText = "БІОСФЕРНА ДИСОРГАНІЗАЦІЯ";
+        }
+
+        function animLoop() {
+            animTime += 0.005;
+            drawTopography();
+            requestAnimationFrame(animLoop);
+        }
+
+        function drawTopography() {
+            const w = canvas.width = canvas.clientWidth, h = canvas.height = canvas.clientHeight;
+            if (w === 0 || h === 0) return;
+            const cx = w / 2, cy = h / 2;
+            ctx.clearRect(0, 0, w, h);
+            const mH = STATE.micro.score / 45, sI = STATE.flora.score / 100, eT = (100 - STATE.eco.score) / 40;
+            const sp = Math.min(w, h) / 38, tW = gridW * sp, tH = gridH * sp, sX = cx - tW / 2, sY = cy - tH / 2;
+            if (clickPulse > 0.01) clickPulse *= 0.95;
+            ctx.lineJoin = "round";
+            for (let j = 0; j < gridH; j++) {
+                ctx.beginPath();
+                for (let i = 0; i < gridW; i++) {
+                    const p = getPoint(i, j, mH, eT, sX, sY, sp);
+                    if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+                }
+                ctx.strokeStyle = `rgba(0, 255, 170, ${0.2 + sI * 0.4})`;
+                ctx.lineWidth = 1; ctx.stroke();
+            }
+            for (let i = 0; i < gridW; i++) {
+                ctx.beginPath();
+                for (let j = 0; j < gridH; j++) {
+                    const p = getPoint(i, j, mH, eT, sX, sY, sp);
+                    if (j === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+                }
+                ctx.strokeStyle = `rgba(0, 204, 255, ${0.15 + sI * 0.3})`;
+                ctx.lineWidth = 0.5; ctx.stroke();
+            }
+            if (sI > 0.1) {
+                ctx.shadowBlur = 10 * sI; ctx.shadowColor = "var(--accent-pri)";
+                for (let k = 0; k < 12; k++) {
+                    const nX = Math.floor(Math.abs(Math.sin(animTime + k)) * (gridW - 1));
+                    const nY = Math.floor(Math.abs(Math.cos(animTime * 0.8 + k)) * (gridH - 1));
+                    const p = getPoint(nX, nY, mH, eT, sX, sY, sp);
+                    ctx.fillStyle = k % 2 === 0 ? "var(--accent-pri)" : "var(--accent-sec)";
+                    ctx.globalAlpha = Math.abs(Math.sin(animTime * 3 + k)) * sI;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 2 + sI * 2, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.shadowBlur = 0;
+            }
+            drawHistoryGraph();
+        }
+
+        function getPoint(i, j, mH, eT, sx, sy, sp) {
+            const xBase = sx + i * sp, yBase = sy + j * sp;
+            const bW = Math.sin(i * 0.2 + animTime) * Math.cos(j * 0.2 + animTime) * 10;
+            const bN = Math.sin(i * 0.4 + animTime * 0.5) * Math.cos(j * 0.3 + animTime * 0.7) * 25 * mH;
+            const turb = Math.sin(animTime * 4 + i * 0.5 + j * 0.5) * eT * 8;
+            const tidalEffect = Math.sin(animTime + j * 0.1) * STATE.luna.tide * 15;
+            let mInf = 0;
+            if (mouseActive) {
+                const dx = xBase - mouseX, dy = yBase - mouseY, dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 150) mInf = (1 - dist / 150) * 35;
+            }
+            const cW = Math.sin(animTime * 12 - i * 0.4 - j * 0.4) * clickPulse * 50;
+            const tZ = bW + bN + turb + tidalEffect + mInf + cW;
+            return { x: sx + i * sp + (j - gridH / 2) * 8, y: yBase - tZ - (i - gridW / 2) * 3 };
+        }
+
+        function drawHistoryGraph() {
+            const hC = document.getElementById('history-graph'), hCtx = hC.getContext('2d');
+            const w = hC.width = hC.clientWidth, h = hC.height = hC.clientHeight;
+            if (w === 0 || h === 0) return;
+            hCtx.clearRect(0, 0, w, h);
+            if (STATE.history.length < 2) return;
+            hCtx.strokeStyle = "var(--accent-pri)"; hCtx.lineWidth = 2; hCtx.beginPath();
+            const step = w / (STATE.history.length - 1);
+            STATE.history.forEach((val, i) => { const px = i * step, py = h - (val / 100) * h; if (i === 0) hCtx.moveTo(px, py); else hCtx.lineTo(px, py); });
+            hCtx.stroke();
+            const grad = hCtx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, "rgba(0, 255, 170, 0.2)"); grad.addColorStop(1, "transparent");
+            hCtx.fillStyle = grad; hCtx.lineTo(w, h); hCtx.lineTo(0, h); hCtx.fill();
+        }
+
+        const starCanvas = document.getElementById('bg-canvas'), starCtx = starCanvas.getContext('2d');
+        let stars = [];
+        function initStars() {
+            starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight;
+            for (let i = 0; i < 150; i++) stars.push({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: Math.random() * 1.5, o: Math.random() });
+        }
+        function drawStars() {
+            starCtx.clearRect(0, 0, innerWidth, innerHeight);
+            stars.forEach(s => { starCtx.globalAlpha = s.o * Math.abs(Math.sin(animTime * 0.5)); starCtx.fillStyle = "#fff"; starCtx.beginPath(); starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2); starCtx.fill(); });
+            setTimeout(() => requestAnimationFrame(drawStars), 30);
+        }
+        initStars(); drawStars(); init();
+    </script>
+</body>
+
+</html>
